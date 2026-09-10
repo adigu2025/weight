@@ -368,7 +368,11 @@ main{padding-bottom:80px;}
 <!-- ══════════ 2 病史評估 ══════════ -->
 <section class="screen" id="screen-history">
   <div class="card">
-    <h2>次發性肥胖病因篩檢</h2>
+    <h2 style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; border-left:4px solid var(--primary); padding-left:11px;" onclick="toggleCollapse('screening-body','screening-toggle')">
+      <span>次發性肥胖病因與藥物性因素篩檢<span class="hint" id="screening-summary" style="font-weight:400; margin-left:8px">尚未勾選</span></span>
+      <span id="screening-toggle" style="color:var(--primary); font-size:15px; font-weight:700">展開填寫 ▾</span>
+    </h2>
+    <div id="screening-body" style="display:none; margin-top:14px">
     <div class="chk-grid">
       <div class="chk-row"><input type="checkbox" id="sc-thyroid"><label for="sc-thyroid">甲狀腺功能低下</label></div>
       <div class="chk-row"><input type="checkbox" id="sc-cushing"><label for="sc-cushing">庫欣氏症候群</label></div>
@@ -391,6 +395,7 @@ main{padding-bottom:80px;}
       <div class="chk-row"><input type="checkbox" id="med-chemo"><label for="med-chemo">化療藥物</label></div>
     </div>
     <div class="field" style="margin-top:10px"><label>藥物是否可調整／備註</label><textarea id="med-note" style="min-height:50px"></textarea></div>
+    </div>
   </div>
 
   <div class="card">
@@ -564,6 +569,7 @@ main{padding-bottom:80px;}
     <div class="btnrow" style="margin-top:0"><button class="btn outline" onclick="addTrackRow('body')">＋ 帶入目前頁面數值</button><button class="btn outline" onclick="addBlankTrackRow('body')">＋ 新增空白列手動輸入</button></div>
     <div class="hint">表格內容可直接點擊儲存格編輯</div>
     <div class="tt-wrap" style="margin-top:12px"><table class="dtable" id="track-body-table"></table></div>
+    <div id="track-body-chart" style="margin-top:16px"></div>
   </div>
 </section>
 
@@ -638,6 +644,7 @@ main{padding-bottom:80px;}
     <div class="btnrow" style="margin-top:0"><button class="btn outline" onclick="addTrackRow('lab')">＋ 帶入目前頁面數值</button><button class="btn outline" onclick="addBlankTrackRow('lab')">＋ 新增空白列手動輸入</button></div>
     <div class="hint">表格內容可直接點擊儲存格編輯</div>
     <div class="tt-wrap" style="margin-top:12px"><table class="dtable" id="track-lab-table"></table></div>
+    <div id="track-lab-chart" style="margin-top:16px"></div>
   </div>
 </section>
 
@@ -792,6 +799,11 @@ main{padding-bottom:80px;}
   </div>
 
   <div class="card no-print">
+    <h2>資料完成度</h2>
+    <div id="completeness-box" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card no-print">
     <h2>產生與匯出報告</h2>
     <div class="btnrow">
       <button class="btn teal" id="pdf-export-btn" onclick="printReport()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg> 列印 / 輸出 PDF</button>
@@ -925,6 +937,8 @@ function showLeaf(id, parent){
   currentParent = parent;
   renderBottomNav();
   window.scrollTo(0,0);
+  if(id === 'report'){ try{ renderCompleteness(); }catch(e){} }
+  if(id === 'track' || id === 'body' || id === 'lab'){ try{ renderTrackChart('body'); renderTrackChart('lab'); }catch(e){} }
 }
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1504,6 +1518,7 @@ function addBlankTrackRow(kind){
   renderTrackTable(kind);
 }
 function renderTrackTable(kind){
+  setTimeout(()=>{ try{ renderTrackChart(kind); }catch(e){} }, 0);
   const table = document.getElementById('track-'+kind+'-table');
   const cols = TRACK_COLS[kind];
   const rows = trackData[kind];
@@ -2459,6 +2474,7 @@ function buildReport(){
       <tr><th>之後</th><td>每3–6個月規律追蹤，長期以「不復胖」為目標</td></tr>
     </table>
     ${P('track-note') ? `<div class="rp-note">備註：${nl2br(P('track-note'))}</div>` : ''}
+    ${trackChartSvg('body','weight','體重變化 (kg)', 640, 200) || ''}
 
     <div class="rp-section-title" style="margin-top:18px">心理支持</div>
     <div class="rp-note">${chk('psy-refer') ? '建議轉介身心科／心理諮商\n' : ''}${chk('psy-support') ? '已建立支持系統\n' : ''}${nl2br(P('psy-note'))}</div>
@@ -2679,6 +2695,146 @@ function printHealthRecord(){
 }
 
 
+
+// ============================================================
+// 追蹤趨勢圖：以內嵌 SVG 繪製，不依賴外部函式庫，離線與列印皆可用
+// ============================================================
+const TRACK_CHART_METRICS = {
+  body: [['weight','體重','kg'],['bmi','BMI',''],['waist','腰圍','cm'],['fat','體脂肪率','%'],['muscle','肌肉量','kg']],
+  lab:  [['hba1c','HbA1c','%'],['ac','空腹血糖','mg/dL'],['tg','三酸甘油酯','mg/dL'],['ldl','LDL-C','mg/dL'],['alt','ALT','U/L']]
+};
+const trackChartMetric = { body: 'weight', lab: 'hba1c' };
+
+function trackChartPoints(kind, key){
+  return (trackData[kind] || [])
+    .map(r => ({ date: (r.date || '').trim(), v: parseFloat(r[key]) }))
+    .filter(p => p.date && !isNaN(p.v))
+    .sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+}
+
+function trackChartSvg(kind, key, title, w, h){
+  const pts = trackChartPoints(kind, key);
+  if(pts.length < 2) return '';
+  const padL = 52, padR = 16, padT = 28, padB = 34;
+  const innerW = w - padL - padR, innerH = h - padT - padB;
+  let min = Math.min(...pts.map(p=>p.v)), max = Math.max(...pts.map(p=>p.v));
+  if(min === max){ min -= 1; max += 1; }
+  const span = max - min;
+  min -= span * 0.12; max += span * 0.12;
+  const x = i => padL + (pts.length === 1 ? innerW/2 : innerW * i / (pts.length - 1));
+  const y = v => padT + innerH - (v - min) / (max - min) * innerH;
+
+  const grid = [0, 0.5, 1].map(f=>{
+    const val = min + (max - min) * (1 - f);
+    const yy = padT + innerH * f;
+    return `<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${w-padR}" y2="${yy.toFixed(1)}" stroke="#E4DFD6" stroke-width="1"/>` +
+           `<text x="${padL-8}" y="${(yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#7A756D">${val.toFixed(1)}</text>`;
+  }).join('');
+
+  const line = pts.map((p,i)=> `${i===0?'M':'L'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(' ');
+  const dots = pts.map((p,i)=>
+    `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="3.5" fill="#3E6A7C"/>` +
+    `<text x="${x(i).toFixed(1)}" y="${(y(p.v)-9).toFixed(1)}" text-anchor="middle" font-size="11" fill="#152831">${p.v}</text>`
+  ).join('');
+  const labels = pts.map((p,i)=>{
+    if(pts.length > 6 && i % 2 === 1 && i !== pts.length-1) return '';
+    return `<text x="${x(i).toFixed(1)}" y="${h-12}" text-anchor="middle" font-size="10.5" fill="#7A756D">${esc(p.date.slice(5))}</text>`;
+  }).join('');
+
+  const first = pts[0].v, last = pts[pts.length-1].v;
+  const diff = last - first;
+  const diffTxt = (diff > 0 ? '+' : '') + diff.toFixed(1);
+  const diffColor = diff === 0 ? '#7A756D' : (diff < 0 ? '#4C7A5A' : '#B3413B');
+
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%; height:auto; display:block; background:#fff; border:1px solid #E4DFD6; border-radius:10px" xmlns="http://www.w3.org/2000/svg">` +
+    `<text x="${padL}" y="18" font-size="13" font-weight="700" fill="#152831">${esc(title)}</text>` +
+    `<text x="${w-padR}" y="18" text-anchor="end" font-size="12" fill="${diffColor}">首次至最近 ${diffTxt}</text>` +
+    grid +
+    `<path d="${line}" fill="none" stroke="#3E6A7C" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>` +
+    dots + labels + `</svg>`;
+}
+
+function renderTrackChart(kind){
+  const box = document.getElementById('track-' + kind + '-chart');
+  if(!box) return;
+  const metrics = TRACK_CHART_METRICS[kind];
+  const cur = trackChartMetric[kind];
+  const pills = metrics.map(([key,label])=>
+    `<span class="bn-pill${key === cur ? ' current' : ''}" style="cursor:pointer" onclick="setTrackMetric('${kind}','${key}')">${esc(label)}</span>`
+  ).join('');
+  const meta = metrics.find(m=>m[0] === cur) || metrics[0];
+  const title = meta[1] + (meta[2] ? ' (' + meta[2] + ')' : '');
+  const svg = trackChartSvg(kind, cur, title, 640, 220);
+  box.innerHTML = `<div class="bn-pills" style="flex-wrap:wrap; overflow-x:visible; margin-bottom:10px">${pills}</div>` +
+    (svg || '<div class="hint">此項目需要至少 2 筆含日期的數值才能繪製趨勢圖。</div>');
+}
+function setTrackMetric(kind, key){
+  trackChartMetric[kind] = key;
+  renderTrackChart(kind);
+}
+
+// ============================================================
+// 資料完成度：產生報告前一眼看出還缺什麼
+// ============================================================
+const COMPLETENESS_RULES = [
+  {screen:'basic',   label:'基本資料',   parent:null, check:()=>{
+     const miss = [];
+     if(!document.getElementById('p-name').value.trim()) miss.push('姓名');
+     if(!document.getElementById('p-birth').value) miss.push('出生年月日');
+     if(!document.getElementById('p-date').value) miss.push('評估日期');
+     return miss;
+   }},
+  {screen:'body',    label:'身體測量',   parent:'workflow-hub', check:()=>{
+     const miss = [];
+     if(!document.getElementById('b-height').value) miss.push('身高');
+     if(!document.getElementById('b-weight').value) miss.push('體重');
+     if(!document.getElementById('b-waist').value) miss.push('腰圍');
+     if(!document.getElementById('b-sbp').value || !document.getElementById('b-dbp').value) miss.push('血壓');
+     return miss;
+   }},
+  {screen:'lab',     label:'檢驗數值',   parent:'workflow-hub', check:()=>{
+     const keys = [['lab-ac','空腹血糖'],['lab-hba1c','HbA1c'],['lab-tg','三酸甘油酯'],['lab-hdl','HDL-C']];
+     return keys.filter(([id])=>!document.getElementById(id).value).map(([,l])=>l);
+   }},
+  {screen:'calorie', label:'熱量與運動', parent:'workflow-hub', check:()=>
+     window._calorieData ? [] : ['尚未計算熱量建議']},
+  {screen:'report',  label:'醫師綜合評語', parent:'workflow-hub', check:()=>
+     document.getElementById('doc-comment').value.trim() ? [] : ['尚未填寫']}
+];
+function renderCompleteness(){
+  const box = document.getElementById('completeness-box');
+  if(!box) return;
+  const rows = COMPLETENESS_RULES.map(r=>{
+    let miss = [];
+    try{ miss = r.check() || []; }catch(e){ miss = []; }
+    const ok = miss.length === 0;
+    const jump = r.parent
+      ? `showLeaf('${r.screen}','${r.parent}')`
+      : `showLeaf('${r.screen}','workflow-hub')`;
+    return `<tr><td style="white-space:nowrap">${esc(r.label)}</td>` +
+      `<td>${ok ? '<span class="flag low">已完成</span>' : '<span class="flag mid">缺：' + esc(miss.join('、')) + '</span>'}</td>` +
+      `<td style="white-space:nowrap"><button class="btn outline" style="padding:4px 12px; font-size:13.5px" onclick="${jump}">前往</button></td></tr>`;
+  }).join('');
+  const missingCount = COMPLETENESS_RULES.filter(r=>{ try{ return (r.check()||[]).length > 0; }catch(e){ return false; } }).length;
+  const head = missingCount === 0
+    ? '<div class="summary-box" style="margin-bottom:12px">所有主要項目皆已填寫。</div>'
+    : `<div class="summary-box" style="margin-bottom:12px; background:var(--amber-pale); border-left-color:var(--primary)">尚有 <b>${missingCount}</b> 個區塊未完成。未填欄位不會阻擋報告產生，報告中會標示為「未測」或「未檢驗」。</div>`;
+  box.innerHTML = head + '<div class="tt-wrap"><table class="dtable"><tr><th>區塊</th><th>狀態</th><th></th></tr>' + rows + '</table></div>';
+}
+
+// 篩檢卡片收合後，於標題顯示已勾選項目數，避免收合造成漏填而未被察覺
+function updateScreeningSummary(){
+  const el = document.getElementById('screening-summary');
+  if(!el) return;
+  const ids = ['sc-thyroid','sc-cushing','sc-pcos','sc-hypothal','sc-gh','sc-hypogonad','sc-genetic',
+    'med-steroid','med-psych','med-insulin','med-bb','med-antiepileptic','med-hormone','med-antihistamine','med-chemo'];
+  const c = ids.filter(id=>{ const e = document.getElementById(id); return e && e.checked; }).length;
+  el.textContent = c ? `已勾選 ${c} 項` : '尚未勾選，可視需要展開';
+  el.style.color = c ? 'var(--primary)' : '';
+}
+document.addEventListener('change', (e)=>{
+  if(e.target && e.target.id && /^(sc|med)-/.test(e.target.id)) updateScreeningSummary();
+}, true);
 function getReportFilename(){
   const name = document.getElementById('p-name').value.trim();
   return (name ? name : '') + '減重評估報告';
