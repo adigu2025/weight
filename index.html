@@ -791,9 +791,14 @@ main{padding-bottom:80px;}
     <h2>產生與匯出報告</h2>
     <div class="btnrow">
       <button class="btn teal" id="pdf-export-btn" onclick="printReport()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg> 列印 / 輸出 PDF</button>
-      <button class="btn outline" onclick="saveState()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M8 3v5h6"/></svg> 儲存目前資料</button>
-      <button class="btn outline" onclick="loadState()">↺ 讀取上次儲存</button>
+      <button class="btn outline" onclick="saveRecord()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M8 3v5h6"/></svg> 儲存病人紀錄</button>
     </div>
+    <div class="hint" style="margin-top:10px">儲存後可在下方紀錄清單中隨時載入。系統會自動暫存草稿，關閉分頁也不會遺失。</div>
+  </div>
+
+  <div class="card no-print">
+    <h2>已儲存的病人紀錄</h2>
+    <div id="records-list" style="margin-top:12px"></div>
   </div>
 </section>
 <div id="report-preview"></div>
@@ -2624,11 +2629,55 @@ function collectState(){
    ...STOPBANG_ITEMS.map(it=>it.id)]
    .forEach(id=> state[id] = document.getElementById(id).checked);
   state._track = trackData;
+  // PHQ-9 為單選鈕，需逐題保存，否則重新載入後第 9 題自殺風險警示會消失
+  state._phq9 = PHQ9_ITEMS.map((q,i)=>{
+    const c = document.querySelector('input[name="phq'+i+'"]:checked');
+    return c ? c.value : null;
+  });
+  // 標籤選取狀態（文字已存在對應 textarea，此處只記錄反白狀態）
+  state._tags = {};
+  document.querySelectorAll('.tag-box[id]').forEach(box=>{
+    state._tags[box.id] = [...box.querySelectorAll('.tag.selected')].map(t=>t.textContent);
+  });
+  // 飲食／活動習慣的分類單選
+  state._catSel = JSON.parse(JSON.stringify(categorySelections));
   return state;
 }
 function applyState(state){
   Object.keys(state).forEach(id=>{
     if(id === '_track'){ Object.assign(trackData, state._track || {body:[],lab:[]}); renderTrackTable('body'); renderTrackTable('lab'); return; }
+    if(id === '_phq9'){
+      (state._phq9 || []).forEach((v,i)=>{
+        document.querySelectorAll('input[name="phq'+i+'"]').forEach(r=> r.checked = (v !== null && r.value === String(v)));
+      });
+      return;
+    }
+    if(id === '_tags'){
+      Object.keys(state._tags || {}).forEach(boxId=>{
+        const box = document.getElementById(boxId);
+        if(!box) return;
+        const want = state._tags[boxId] || [];
+        // 只切換反白，不重寫 textarea，避免與已還原的文字重複
+        box.querySelectorAll('.tag').forEach(t=> t.classList.toggle('selected', want.includes(t.textContent)));
+      });
+      return;
+    }
+    if(id === '_catSel'){
+      Object.keys(categorySelections).forEach(k=> delete categorySelections[k]);
+      Object.assign(categorySelections, state._catSel || {});
+      Object.keys(categorySelections).forEach(taId=>{
+        Object.keys(categorySelections[taId] || {}).forEach(catKey=>{
+          const val = categorySelections[taId][catKey];
+          document.querySelectorAll('input[name="'+taId+'-'+catKey+'"]').forEach(r=>{
+            const lab = r.parentNode.querySelector('.ms-title');
+            const desc = r.parentNode.querySelector('.ms-desc');
+            const full = desc && desc.textContent ? lab.textContent + '：' + desc.textContent : (lab ? lab.textContent : '');
+            r.checked = (full === val);
+          });
+        });
+      });
+      return;
+    }
     const el = document.getElementById(id);
     if(!el) return;
     if(el.type === 'checkbox') el.checked = state[id];
@@ -2641,18 +2690,172 @@ function applyState(state){
   updateHba1cReadout();
   calcPhq9();
 }
-function saveState(){
+// ============================================================
+// 病人紀錄：多筆儲存、草稿自動暫存、離開提醒
+// ============================================================
+const RECORDS_KEY = 'obesity_records_v1';
+const DRAFT_KEY   = 'obesity_draft_v1';
+const LEGACY_KEY  = 'obesity_assessment_state_v2';
+let isDirty = false;
+
+function loadRecords(){
+  try{ const r = JSON.parse(localStorage.getItem(RECORDS_KEY)); return Array.isArray(r) ? r : []; }
+  catch(e){ return []; }
+}
+function persistRecords(list){
+  try{ localStorage.setItem(RECORDS_KEY, JSON.stringify(list)); return true; }
+  catch(e){ alert('儲存失敗：'+e.message+'\n瀏覽器儲存空間可能已滿，請先刪除舊紀錄。'); return false; }
+}
+function setStatus(text, dirty){
+  isDirty = !!dirty;
+  const pill = document.getElementById('status-pill');
+  if(pill) pill.textContent = text;
+}
+function markDirty(){
+  if(isDirty) return;
+  setStatus('未儲存的變更', true);
+}
+function recordLabel(st){
+  const name = (st['p-name'] || '').trim() || '（未填姓名）';
+  const date = (st['p-date'] || '').trim() || '未填日期';
+  return name + '｜' + date;
+}
+
+function saveRecord(){
+  const st = collectState();
+  const name = (st['p-name'] || '').trim();
+  if(!name){ alert('請先在「基本資料」填寫姓名，再儲存紀錄。'); return; }
+  const list = loadRecords();
+  const key = name + '||' + (st['p-date'] || '');
+  const idx = list.findIndex(r => r.key === key);
+  if(idx >= 0){
+    if(!confirm('已有同姓名與同評估日期的紀錄：\n' + recordLabel(st) + '\n\n要覆蓋更新嗎？')) return;
+    list[idx] = {key, label: recordLabel(st), savedAt: new Date().toISOString(), state: st};
+  } else {
+    list.unshift({key, label: recordLabel(st), savedAt: new Date().toISOString(), state: st});
+  }
+  if(!persistRecords(list)) return;
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+  renderRecords();
+  setStatus('已儲存 ' + new Date().toLocaleTimeString('zh-TW'), false);
+}
+
+function loadRecord(key){
+  const rec = loadRecords().find(r => r.key === key);
+  if(!rec){ alert('找不到該筆紀錄'); return; }
+  if(isDirty && !confirm('目前有未儲存的變更，載入其他紀錄會覆蓋掉。要繼續嗎？')) return;
+  applyState(rec.state);
+  recalcAll();
+  renderRecords();
+  setStatus('已載入 ' + rec.label, false);
+  goHome();
+}
+
+function deleteRecord(key){
+  const list = loadRecords();
+  const rec = list.find(r => r.key === key);
+  if(!rec) return;
+  if(!confirm('確定刪除這筆紀錄？\n' + rec.label + '\n\n刪除後無法復原。')) return;
+  persistRecords(list.filter(r => r.key !== key));
+  renderRecords();
+}
+
+function renderRecords(){
+  const box = document.getElementById('records-list');
+  if(!box) return;
+  const list = loadRecords();
+  if(!list.length){
+    box.innerHTML = '<div class="hint">尚無儲存的紀錄。填寫姓名後按上方「儲存病人紀錄」即可建立。</div>';
+    return;
+  }
+  const rows = list.map(r=>{
+    const t = new Date(r.savedAt);
+    const ts = isNaN(t) ? '' : (t.toLocaleDateString('zh-TW') + ' ' + t.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}));
+    const k = esc(r.key).replace(/'/g, '&#39;');
+    return '<tr><td>' + esc(r.label) + '</td><td style="white-space:nowrap">' + esc(ts) + '</td>' +
+      '<td style="white-space:nowrap"><button class="btn outline" style="padding:5px 13px; font-size:14px" onclick="loadRecord(\'' + k + '\')">載入</button> ' +
+      '<button class="btn outline" style="padding:5px 13px; font-size:14px; color:var(--red); border-color:var(--red)" onclick="deleteRecord(\'' + k + '\')">刪除</button></td></tr>';
+  }).join('');
+  box.innerHTML = '<div class="tt-wrap"><table class="dtable"><tr><th>病人｜評估日期</th><th>儲存時間</th><th>操作</th></tr>' + rows + '</table></div>';
+}
+
+// 草稿自動暫存：輸入後 1.5 秒無動作即寫入，關閉分頁不致遺失
+let draftTimer = null;
+function scheduleDraftSave(){
+  markDirty();
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(()=>{
+    try{
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({savedAt: new Date().toISOString(), state: collectState()}));
+    }catch(e){}
+  }, 1500);
+}
+['input','change'].forEach(evt=>{
+  document.addEventListener(evt, (e)=>{
+    const t = e.target;
+    if(!t || !t.closest) return;
+    if(t.closest('#report-preview') || t.closest('#records-list')) return;
+    if(t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') scheduleDraftSave();
+  }, true);
+});
+document.addEventListener('click', (e)=>{
+  const t = e.target;
+  if(t && t.closest && t.closest('.tag-box')) scheduleDraftSave();
+}, true);
+
+window.addEventListener('beforeunload', (e)=>{
+  if(!isDirty) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+// 重新計算所有衍生數值（載入紀錄或草稿後使用）
+function recalcAll(){
+  try{ calcBMI(true); }catch(e){}
+  try{ calcMetabolic(); }catch(e){}
+  try{ calcPhq9(); }catch(e){}
+  try{ calcStopBang(); }catch(e){}
+  try{ updateTargetLossPct(); updateStandardWeightRange(); updateHba1cReadout(); }catch(e){}
+  try{ validateAllFields(); }catch(e){}
+}
+
+// 啟動時：舊版單筆資料轉為紀錄；有草稿則詢問是否接續
+(function initStorage(){
   try{
-    localStorage.setItem('obesity_assessment_state_v2', JSON.stringify(collectState()));
-    document.getElementById('status-pill').textContent = '已儲存 ' + new Date().toLocaleTimeString('zh-TW');
-  }catch(e){ alert('儲存失敗：'+e.message); }
-}
-function loadState(){
-  const raw = localStorage.getItem('obesity_assessment_state_v2');
-  if(!raw){ alert('尚無儲存資料'); return; }
-  applyState(JSON.parse(raw));
-  document.getElementById('status-pill').textContent = '已讀取儲存資料';
-}
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if(legacy && !localStorage.getItem(RECORDS_KEY)){
+      const st = JSON.parse(legacy);
+      const key = ((st['p-name']||'').trim() || '舊資料') + '||' + (st['p-date']||'');
+      persistRecords([{key, label: recordLabel(st), savedAt: new Date().toISOString(), state: st}]);
+    }
+  }catch(e){}
+  renderRecords();
+
+  try{
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      const t = new Date(d.savedAt);
+      const ts = isNaN(t) ? '' : (t.toLocaleDateString('zh-TW') + ' ' + t.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}));
+      const bar = document.createElement('div');
+      bar.className = 'no-print';
+      bar.style.cssText = 'background:var(--amber-pale); border-bottom:1px solid #E4CFA4; padding:10px 18px; display:flex; align-items:center; gap:12px; justify-content:center; flex-wrap:wrap; font-size:15px;';
+      bar.innerHTML = '<span>偵測到未儲存的草稿（' + esc(ts) + '），要接續填寫嗎？</span>';
+      const b1 = document.createElement('button');
+      b1.className = 'btn outline';
+      b1.style.cssText = 'padding:5px 15px; font-size:14px';
+      b1.textContent = '載入草稿';
+      b1.onclick = ()=>{ applyState(d.state); recalcAll(); setStatus('已載入草稿', true); bar.remove(); };
+      const b2 = document.createElement('button');
+      b2.className = 'btn outline';
+      b2.style.cssText = 'padding:5px 15px; font-size:14px';
+      b2.textContent = '捨棄';
+      b2.onclick = ()=>{ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} bar.remove(); };
+      bar.appendChild(b1); bar.appendChild(b2);
+      document.body.insertBefore(bar, document.querySelector('main'));
+    }
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
