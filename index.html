@@ -456,16 +456,15 @@ main{padding-bottom:80px;}
 <!-- ══════════ 3 身體測量 ══════════ -->
 <section class="screen" id="screen-body">
   <div class="card">
-    <h2>基本篩檢：身高體重、腰圍、血壓心跳</h2>
-    <div class="grid" style="grid-template-columns:repeat(5,1fr)">
-      <div class="field"><label>身高 (cm)</label><input id="b-height" type="number" step="0.1"></div>
-      <div class="field"><label>體重 (kg)</label><input id="b-weight" type="number" step="0.1"></div>
-      <div class="field"><label>腰圍 (cm)</label><input id="b-waist" type="number" step="0.1"></div>
-      <div class="field"><label>心跳 (bpm)</label><input id="b-hr" type="number"></div>
-      <div class="field"><label>血壓 收縮/舒張 (mmHg)</label><div style="display:flex; gap:6px"><input id="b-sbp" type="number"><input id="b-dbp" type="number"></div></div>
+    <h2>基本篩檢：身高體重、腰圍、血壓</h2>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="field"><label>身高 (cm)</label><input id="b-height" type="number" min="100" max="250" step="0.1"></div>
+      <div class="field"><label>體重 (kg)</label><input id="b-weight" type="number" min="20" max="400" step="0.1"></div>
+      <div class="field"><label>腰圍 (cm)</label><input id="b-waist" type="number" min="40" max="250" step="0.1"></div>
+      <div class="field"><label>血壓 收縮/舒張 (mmHg)</label><div style="display:flex; gap:6px"><input id="b-sbp" type="number" min="60" max="300"><input id="b-dbp" type="number" min="30" max="200"></div></div>
     </div>
     <div class="grid" style="margin-top:14px">
-      <div class="field"><label>目標體重 (kg)</label><input id="b-target-weight" type="number" step="0.1"></div>
+      <div class="field"><label>目標體重 (kg)</label><input id="b-target-weight" type="number" min="20" max="400" step="0.1"></div>
       <div class="field"><label>預計減重比例</label><input id="target-loss-pct" readonly style="background:#F4F2EE" placeholder="填寫目標體重後自動計算"></div>
       <div class="field"><label>標準體重範圍（BMI 18.5–24）</label><input id="standard-weight-range" readonly style="background:#F4F2EE" placeholder="填寫身高後自動計算"></div>
     </div>
@@ -522,7 +521,7 @@ main{padding-bottom:80px;}
       </label>
     </div>
     <div class="ms-divider">或符合糖尿病前期者</div>
-    <div class="field" style="max-width:280px"><label>糖化血紅素 HbA1c (%)</label><input id="ms-hba1c" type="number" step="0.1"></div>
+    <div class="field" style="max-width:280px"><label>糖化血紅素 HbA1c (%)</label><input id="ms-hba1c" type="number" min="3" max="20" step="0.1"></div>
     <div class="hint" id="ms-hba1c-readout" style="margin-top:8px">5.7%–6.4% 為糖尿病前期，符合獨立診斷條件</div>
     <div class="summary-box" id="metabolic-result" style="margin-top:14px; display:none"></div>
     <div class="field" style="margin-top:12px"><label>代謝症候群備註</label><textarea id="metabolic-note"></textarea></div>
@@ -531,15 +530,15 @@ main{padding-bottom:80px;}
   <div class="card">
     <h2>身體組成分析（TANITA 手動輸入）</h2>
     <div class="grid">
-      <div class="field"><label>體脂肪率 (%)</label><input id="t-fat" type="number" step="0.1"></div>
-      <div class="field"><label>肌肉量 (kg)</label><input id="t-muscle" type="number" step="0.1"></div>
-      <div class="field"><label>內臟脂肪等級</label><input id="t-visceral" type="number" step="1"></div>
-      <div class="field"><label>體脂肪量 (kg)</label><input id="t-fatmass" type="number" step="0.1"></div>
-      <div class="field"><label>身體水分率 (%)</label><input id="t-water" type="number" step="0.1"></div>
-      <div class="field"><label>基礎代謝量 BMR（機器實測, kcal）</label><input id="t-bmr" type="number" step="1"></div>
-      <div class="field"><label>身體年齡</label><input id="t-bodyage" type="number" step="1"></div>
-      <div class="field"><label>四肢骨骼肌指數 SMI (kg/m²)</label><input id="t-smi" type="number" step="0.1"></div>
-      <div class="field"><label>相位角 Phase Angle</label><input id="t-phaseangle" type="number" step="0.1"></div>
+      <div class="field"><label>體脂肪率 (%)</label><input id="t-fat" type="number" min="1" max="80" step="0.1"></div>
+      <div class="field"><label>肌肉量 (kg)</label><input id="t-muscle" type="number" min="5" max="150" step="0.1"></div>
+      <div class="field"><label>內臟脂肪等級</label><input id="t-visceral" type="number" min="1" max="60" step="1"></div>
+      <div class="field"><label>體脂肪量 (kg)</label><input id="t-fatmass" type="number" min="1" max="250" step="0.1"></div>
+      <div class="field"><label>身體水分率 (%)</label><input id="t-water" type="number" min="10" max="90" step="0.1"></div>
+      <div class="field"><label>基礎代謝量 BMR（機器實測, kcal）</label><input id="t-bmr" type="number" min="500" max="5000" step="1"></div>
+      <div class="field"><label>身體年齡</label><input id="t-bodyage" type="number" min="10" max="120" step="1"></div>
+      <div class="field"><label>四肢骨骼肌指數 SMI (kg/m²)</label><input id="t-smi" type="number" min="2" max="20" step="0.1"></div>
+      <div class="field"><label>相位角 Phase Angle</label><input id="t-phaseangle" type="number" min="1" max="15" step="0.1"></div>
     </div>
     <div class="hint">SMI與相位角為進階生物電阻抗（BIA）指標，若TANITA機型未提供可留空，不影響其他評估項目</div>
     <div class="btnrow"><button class="btn" onclick="calcBody()">套用分析</button></div>
@@ -607,19 +606,19 @@ main{padding-bottom:80px;}
   <div class="card">
     <h2>檢驗數值</h2>
     <div class="grid">
-      <div class="field"><label>空腹血糖 AC Sugar (mg/dL)</label><input id="lab-ac" type="number"></div>
-      <div class="field"><label>糖化血色素 HbA1c (%)</label><input id="lab-hba1c" type="number" step="0.1"></div>
-      <div class="field"><label>HOMA-IR</label><input id="lab-homa" type="number" step="0.1"></div>
-      <div class="field"><label>總膽固醇 T-CHO (mg/dL)</label><input id="lab-tcho" type="number"></div>
-      <div class="field"><label>三酸甘油酯 TG (mg/dL)</label><input id="lab-tg" type="number"></div>
-      <div class="field"><label>HDL-C (mg/dL)</label><input id="lab-hdl" type="number"></div>
-      <div class="field"><label>LDL-C (mg/dL)</label><input id="lab-ldl" type="number"></div>
-      <div class="field"><label>S-GPT = ALT (U/L)</label><input id="lab-alt" type="number"></div>
-      <div class="field"><label>S-GOT = AST (U/L)</label><input id="lab-ast" type="number"></div>
-      <div class="field"><label>肌酸酐 Cr (mg/dL)</label><input id="lab-cr" type="number" step="0.01"></div>
-      <div class="field"><label>腎絲球過濾率 eGFR</label><input id="lab-egfr" type="number"></div>
-      <div class="field"><label>甲狀腺促素 TSH (uIU/mL)</label><input id="lab-tsh" type="number" step="0.01"></div>
-      <div class="field"><label>尿酸 Uric Acid (mg/dL)</label><input id="lab-ua" type="number" step="0.1"></div>
+      <div class="field"><label>空腹血糖 AC Sugar (mg/dL)</label><input id="lab-ac" type="number" min="20" max="800"></div>
+      <div class="field"><label>糖化血色素 HbA1c (%)</label><input id="lab-hba1c" type="number" min="3" max="20" step="0.1"></div>
+      <div class="field"><label>HOMA-IR</label><input id="lab-homa" type="number" min="0.1" max="50" step="0.1"></div>
+      <div class="field"><label>總膽固醇 T-CHO (mg/dL)</label><input id="lab-tcho" type="number" min="50" max="600"></div>
+      <div class="field"><label>三酸甘油酯 TG (mg/dL)</label><input id="lab-tg" type="number" min="20" max="2000"></div>
+      <div class="field"><label>HDL-C (mg/dL)</label><input id="lab-hdl" type="number" min="10" max="150"></div>
+      <div class="field"><label>LDL-C (mg/dL)</label><input id="lab-ldl" type="number" min="10" max="400"></div>
+      <div class="field"><label>S-GPT = ALT (U/L)</label><input id="lab-alt" type="number" min="1" max="2000"></div>
+      <div class="field"><label>S-GOT = AST (U/L)</label><input id="lab-ast" type="number" min="1" max="2000"></div>
+      <div class="field"><label>肌酸酐 Cr (mg/dL)</label><input id="lab-cr" type="number" min="0.1" max="20" step="0.01"></div>
+      <div class="field"><label>腎絲球過濾率 eGFR</label><input id="lab-egfr" type="number" min="1" max="200"></div>
+      <div class="field"><label>甲狀腺促素 TSH (uIU/mL)</label><input id="lab-tsh" type="number" min="0.01" max="100" step="0.01"></div>
+      <div class="field"><label>尿酸 Uric Acid (mg/dL)</label><input id="lab-ua" type="number" min="1" max="20" step="0.1"></div>
     </div>
     <div class="field" style="margin-top:12px"><label>檢驗數值備註</label><textarea id="lab-note"></textarea></div>
   </div>
@@ -1118,9 +1117,11 @@ function getHeightM(){
   const h = parseFloat(document.getElementById('b-height').value);
   return h ? h/100 : null;
 }
-['b-height','b-weight'].forEach(id=>{
+// 腰圍、血壓、性別同樣影響衍生判讀，一併觸發重算，避免修正數值後判讀停留在舊值
+['b-height','b-weight','b-waist','b-sbp','b-dbp'].forEach(id=>{
   document.getElementById(id).addEventListener('input', ()=>{ calcBMI(true); if(typeof calcStopBang === 'function') calcStopBang(); });
 });
+document.getElementById('p-gender').addEventListener('change', ()=> calcBMI(true));
 document.getElementById('p-gender').addEventListener('change', ()=>{ if(typeof calcStopBang === 'function') calcStopBang(); });
 function updateTargetLossPct(){
   const w = parseFloat(document.getElementById('b-weight').value);
@@ -1150,10 +1151,106 @@ function bmiCategory(bmi){
   if(bmi < 35) return {label:'中度肥胖', cls:'high'};
   return {label:'重度肥胖', cls:'high'};
 }
+// ============================================================
+// 報告顯示輔助：未填寫的欄位不印出孤兒單位
+// ============================================================
+const RV_NA = '<span style="color:#9E9B94">未測</span>';
+const RV_NA_LAB = '<span style="color:#9E9B94">未檢驗</span>';
+function rv(val, unit){
+  const v = (val == null ? '' : String(val)).trim();
+  if(!v) return RV_NA;
+  return esc(v) + (unit ? ' ' + unit : '');
+}
+function rvLab(val){
+  const v = (val == null ? '' : String(val)).trim();
+  return v ? esc(v) : RV_NA_LAB;
+}
+function rvText(val){
+  const v = (val == null ? '' : String(val)).trim();
+  return (!v || v === '未填寫' || v === '--') ? RV_NA : esc(v);
+}
+
+// ============================================================
+// 輸入合理範圍檢查：超出生理範圍時標紅並提示，避免打錯字直接進報告
+// ============================================================
+const FIELD_RANGES = {
+  'b-height':{min:100,max:250,label:'身高',unit:'cm'},
+  'b-weight':{min:20,max:400,label:'體重',unit:'kg'},
+  'b-waist':{min:40,max:250,label:'腰圍',unit:'cm'},
+  'b-sbp':{min:60,max:300,label:'收縮壓',unit:'mmHg'},
+  'b-dbp':{min:30,max:200,label:'舒張壓',unit:'mmHg'},
+  'b-target-weight':{min:20,max:400,label:'目標體重',unit:'kg'},
+  't-fat':{min:1,max:80,label:'體脂肪率',unit:'%'},
+  't-muscle':{min:5,max:150,label:'肌肉量',unit:'kg'},
+  't-fatmass':{min:1,max:250,label:'體脂肪量',unit:'kg'},
+  't-visceral':{min:1,max:60,label:'內臟脂肪等級',unit:''},
+  't-water':{min:10,max:90,label:'身體水分率',unit:'%'},
+  't-bmr':{min:500,max:5000,label:'基礎代謝量',unit:'kcal'},
+  't-bodyage':{min:10,max:120,label:'身體年齡',unit:''},
+  't-smi':{min:2,max:20,label:'SMI',unit:''},
+  't-phaseangle':{min:1,max:15,label:'相位角',unit:''},
+  'lab-ac':{min:20,max:800,label:'空腹血糖',unit:'mg/dL'},
+  'lab-hba1c':{min:3,max:20,label:'HbA1c',unit:'%'},
+  'ms-hba1c':{min:3,max:20,label:'HbA1c',unit:'%'},
+  'lab-homa':{min:0.1,max:50,label:'HOMA-IR',unit:''},
+  'lab-tcho':{min:50,max:600,label:'總膽固醇',unit:'mg/dL'},
+  'lab-tg':{min:20,max:2000,label:'三酸甘油酯',unit:'mg/dL'},
+  'lab-hdl':{min:10,max:150,label:'HDL-C',unit:'mg/dL'},
+  'lab-ldl':{min:10,max:400,label:'LDL-C',unit:'mg/dL'},
+  'lab-alt':{min:1,max:2000,label:'ALT',unit:'U/L'},
+  'lab-ast':{min:1,max:2000,label:'AST',unit:'U/L'},
+  'lab-cr':{min:0.1,max:20,label:'肌酸酐',unit:'mg/dL'},
+  'lab-egfr':{min:1,max:200,label:'eGFR',unit:''},
+  'lab-tsh':{min:0.01,max:100,label:'TSH',unit:'uIU/mL'},
+  'lab-ua':{min:1,max:20,label:'尿酸',unit:'mg/dL'}
+};
+function validateField(id){
+  const el = document.getElementById(id);
+  const r = FIELD_RANGES[id];
+  if(!el || !r) return true;
+  const warnId = id + '-range-warn';
+  let warn = document.getElementById(warnId);
+  const raw = el.value.trim();
+  const v = parseFloat(raw);
+  const bad = raw !== '' && (isNaN(v) || v < r.min || v > r.max);
+  if(bad){
+    el.style.borderColor = 'var(--red)';
+    el.style.background = 'var(--red-pale)';
+    if(!warn){
+      warn = document.createElement('div');
+      warn.id = warnId;
+      warn.className = 'hint';
+      warn.style.color = 'var(--red)';
+      warn.style.marginTop = '4px';
+      el.parentNode.appendChild(warn);
+    }
+    warn.textContent = '請確認：' + r.label + '合理範圍為 ' + r.min + ' 至 ' + r.max + (r.unit ? ' ' + r.unit : '');
+  } else {
+    el.style.borderColor = '';
+    el.style.background = '';
+    if(warn) warn.remove();
+  }
+  return !bad;
+}
+function validateAllFields(){
+  return Object.keys(FIELD_RANGES).filter(id => !validateField(id));
+}
+Object.keys(FIELD_RANGES).forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', ()=> validateField(id));
+});
 function calcBMI(silent){
   const hM = getHeightM();
   const w = parseFloat(document.getElementById('b-weight').value);
   if(!hM || !w){ if(!silent) alert('請先填寫身高與體重'); return; }
+  // 身高體重超出生理範圍時不計算，避免打錯字產生錯誤分級
+  if(!validateField('b-height') || !validateField('b-weight')){
+    document.getElementById('bmi-value').textContent = '--';
+    document.getElementById('bmi-flag').innerHTML = '<span class="flag mid">數值超出合理範圍，請確認身高體重</span>';
+    document.getElementById('bmi-category').textContent = '數值超出合理範圍';
+    document.getElementById('bmi-result').style.display = 'block';
+    return;
+  }
   const bmi = w/(hM*hM);
   const cat = bmiCategory(bmi);
   document.getElementById('bmi-value').textContent = bmi.toFixed(1);
@@ -2072,6 +2169,11 @@ function comorbidSummary(){
 }
 
 function buildReport(){
+  // 產生報告前強制重算一次，確保報告內的判讀與目前輸入值一致
+  calcBMI(true);
+  if(typeof calcMetabolic === 'function') calcMetabolic();
+  if(typeof calcPhq9 === 'function') calcPhq9();
+  if(typeof calcStopBang === 'function') calcStopBang();
   const P = id => document.getElementById(id).value;
   const name = P('p-name') || '（未填寫姓名）';
   const gender = P('p-gender') === 'M' ? '男' : '女';
@@ -2124,14 +2226,14 @@ function buildReport(){
     <table class="rp-table" style="table-layout:fixed">
       <tr><th style="width:25%">身高</th><td style="width:25%">${esc(height)} cm</td><th style="width:25%">體重</th><td style="width:25%">${esc(weight)} kg</td></tr>
       <tr><th>BMI</th><td>${esc(bmiVal)} kg/m²</td><th>體位分級</th><td>${esc(document.getElementById('bmi-category').textContent)}</td></tr>
-      <tr><th>理想體重</th><td>${esc(document.getElementById('standard-weight-range').value)}</td><th>目標體重</th><td>${esc(P('b-target-weight'))} kg（${esc(document.getElementById('target-loss-pct').value)}）</td></tr>
-      <tr><th>腰圍</th><td>${esc(P('b-waist'))} cm</td><th>腰圍風險</th><td>${esc(document.getElementById('waist-flag').textContent)}</td></tr>
-      <tr><th>血壓</th><td>${esc(P('b-sbp'))}/${esc(P('b-dbp'))} mmHg</td><th>心跳</th><td>${esc(P('b-hr'))} bpm</td></tr>
-      <tr><th>體脂肪率</th><td>${esc(P('t-fat'))} %</td><th>體脂肪量</th><td>${esc(P('t-fatmass'))} kg</td></tr>
-      <tr><th>肌肉量</th><td>${esc(P('t-muscle'))} kg</td><th>身體水分率</th><td>${esc(P('t-water'))} %</td></tr>
-      <tr><th>內臟脂肪等級</th><td>${esc(P('t-visceral'))}</td><th>基礎代謝量（實測）</th><td>${esc(P('t-bmr'))} kcal</td></tr>
-      <tr><th>身體年齡</th><td>${esc(P('t-bodyage'))}</td><th>SMI（骨骼肌指數）</th><td>${esc(P('t-smi'))}</td></tr>
-      <tr><th>相位角 Phase Angle</th><td>${esc(P('t-phaseangle'))}</td><td></td><td></td></tr>
+      <tr><th>理想體重</th><td>${rvText(document.getElementById('standard-weight-range').value)}</td><th>目標體重</th><td>${P('b-target-weight') ? esc(P('b-target-weight'))+' kg（'+esc(document.getElementById('target-loss-pct').value)+'）' : RV_NA}</td></tr>
+      <tr><th>腰圍</th><td>${rv(P('b-waist'),'cm')}</td><th>腰圍風險</th><td>${rvText(document.getElementById('waist-flag').textContent)}</td></tr>
+      <tr><th>血壓</th><td colspan="3">${(P('b-sbp')||P('b-dbp')) ? esc(P('b-sbp'))+'/'+esc(P('b-dbp'))+' mmHg' : RV_NA}</td></tr>
+      <tr><th>體脂肪率</th><td>${rv(P('t-fat'),'%')}</td><th>體脂肪量</th><td>${rv(P('t-fatmass'),'kg')}</td></tr>
+      <tr><th>肌肉量</th><td>${rv(P('t-muscle'),'kg')}</td><th>身體水分率</th><td>${rv(P('t-water'),'%')}</td></tr>
+      <tr><th>內臟脂肪等級</th><td>${rv(P('t-visceral'))}</td><th>基礎代謝量（實測）</th><td>${rv(P('t-bmr'),'kcal')}</td></tr>
+      <tr><th>身體年齡</th><td>${rv(P('t-bodyage'))}</td><th>SMI（骨骼肌指數）</th><td>${rv(P('t-smi'))}</td></tr>
+      <tr><th>相位角 Phase Angle</th><td>${rv(P('t-phaseangle'))}</td><td></td><td></td></tr>
     </table>
     <div class="rp-note">${nl2br(document.getElementById('body-result').innerText || '')}</div>
     ${P('body-note') ? `<div class="rp-note" style="margin-top:4px">備註：${nl2br(P('body-note'))}</div>` : ''}
@@ -2144,13 +2246,13 @@ function buildReport(){
 
     <div class="rp-section-title" style="margin-top:18px">代謝相關檢驗數值</div>
     <table class="rp-table" style="table-layout:fixed">
-      <tr><th style="width:25%">空腹血糖 AC Sugar</th><td style="width:25%">${esc(P('lab-ac'))}</td><th style="width:25%">醣化血色素 HbA1c</th><td style="width:25%">${esc(P('lab-hba1c'))}</td></tr>
-      <tr><th>胰島素阻抗 HOMA-IR</th><td>${esc(P('lab-homa'))}</td><th>總膽固醇 T-CHO</th><td>${esc(P('lab-tcho'))}</td></tr>
-      <tr><th>三酸甘油酯 TG</th><td>${esc(P('lab-tg'))}</td><th>高密度膽固醇 HDL-C</th><td>${esc(P('lab-hdl'))}</td></tr>
-      <tr><th>低密度膽固醇 LDL-C</th><td>${esc(P('lab-ldl'))}</td><th>麩丙胺酸轉胺酶 ALT</th><td>${esc(P('lab-alt'))}</td></tr>
-      <tr><th>麩草醋酸轉胺酶 AST</th><td>${esc(P('lab-ast'))}</td><th>肌酸酐 Cr</th><td>${esc(P('lab-cr'))}</td></tr>
-      <tr><th>腎絲球過濾率 eGFR</th><td>${esc(P('lab-egfr'))}</td><th>甲狀腺促素 TSH</th><td>${esc(P('lab-tsh'))}</td></tr>
-      <tr><th>尿酸 UA</th><td>${esc(P('lab-ua'))}</td><td></td><td></td></tr>
+      <tr><th style="width:25%">空腹血糖 AC Sugar</th><td style="width:25%">${rvLab(P('lab-ac'))}</td><th style="width:25%">醣化血色素 HbA1c</th><td style="width:25%">${rvLab(P('lab-hba1c'))}</td></tr>
+      <tr><th>胰島素阻抗 HOMA-IR</th><td>${rvLab(P('lab-homa'))}</td><th>總膽固醇 T-CHO</th><td>${rvLab(P('lab-tcho'))}</td></tr>
+      <tr><th>三酸甘油酯 TG</th><td>${rvLab(P('lab-tg'))}</td><th>高密度膽固醇 HDL-C</th><td>${rvLab(P('lab-hdl'))}</td></tr>
+      <tr><th>低密度膽固醇 LDL-C</th><td>${rvLab(P('lab-ldl'))}</td><th>麩丙胺酸轉胺酶 ALT</th><td>${rvLab(P('lab-alt'))}</td></tr>
+      <tr><th>麩草醋酸轉胺酶 AST</th><td>${rvLab(P('lab-ast'))}</td><th>肌酸酐 Cr</th><td>${rvLab(P('lab-cr'))}</td></tr>
+      <tr><th>腎絲球過濾率 eGFR</th><td>${rvLab(P('lab-egfr'))}</td><th>甲狀腺促素 TSH</th><td>${rvLab(P('lab-tsh'))}</td></tr>
+      <tr><th>尿酸 UA</th><td>${rvLab(P('lab-ua'))}</td><td></td><td></td></tr>
     </table>
     ${P('lab-note') ? `<div class="rp-note">備註：${nl2br(P('lab-note'))}</div>` : ''}
   </div>`);
@@ -2506,7 +2608,7 @@ function collectState(){
   const ids = ['p-name','p-gender','p-birth-y','p-birth-m','p-birth-d','p-date','b-height',
     'sc-note','med-note','diet-habit-text','activity-habit-text',
     'fam-note','preg-plan','motiv-score','motiv-support','fam-motiv-note',
-    'b-weight','b-waist','b-sbp','b-dbp','b-hr','b-target-weight',
+    'b-weight','b-waist','b-sbp','b-dbp','b-target-weight',
     't-fat','t-fatmass','t-muscle','t-visceral','t-water','t-bmr','t-bodyage','t-smi','t-phaseangle',
     'us-fatty','us-text','us-thyroid','us-thyroid-text',
     'lab-ac','lab-hba1c','lab-homa','lab-tcho','lab-ldl','lab-hdl','lab-tg','lab-ast','lab-alt','lab-cr','lab-egfr','lab-ua','lab-tsh',
