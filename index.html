@@ -873,7 +873,7 @@ const TOP_AREAS = [
 ];
 
 // 最後改版日期：每次改版請一併更新，會顯示於首頁左下角
-const APP_REVISION = '2026-09-10';
+const APP_REVISION = '2026-09-15';
 function renderAppRevision(){
   const el = document.getElementById('app-revision');
   if(el) el.textContent = '最後改版：' + APP_REVISION;
@@ -2659,9 +2659,15 @@ document.addEventListener('keydown', (e)=>{
     else if(e.key === 'Escape'){ e.preventDefault(); goBack(); }
     return;
   }
+  // 列印單張與製作報告（含各分頁）同樣以 ESC 返回上一層，連按即回主畫面
+  if(currentScreen === 'print-single' || currentScreen === 'workflow-hub'){
+    if(e.key === 'Escape'){ e.preventDefault(); goBack(); }
+    return;
+  }
   if(CATEGORIES.some(c=>c.id===currentScreen)){
     if(e.key === 'ArrowLeft'){ e.preventDefault(); stepScreen(-1); }
     else if(e.key === 'ArrowRight'){ e.preventDefault(); stepScreen(1); }
+    else if(e.key === 'Escape'){ e.preventDefault(); goBack(); }
   }
 });
 
@@ -2930,23 +2936,87 @@ function printReport(){
   printIsolated(document.getElementById('report-preview').innerHTML, getReportFilename());
 }
 
+// A4 於 96dpi 的像素高。頁面內容只要超出一點點，尾端就會溢到下一張紙而印出空白頁。
+const PRINT_SHEET_H = 1123;
+
+// 內容僅略超過一張 A4 時等比縮到剛好一頁；超出較多者維持自然分頁，
+// 讓內容正常延續到下一張並保留重複的頁首頁尾。
+function fitPrintPages(doc){
+  const view = doc.defaultView;
+  doc.querySelectorAll('.report-page').forEach(pg=>{
+    const cs = view.getComputedStyle(pg);
+    const padT = parseFloat(cs.paddingTop) || 0;
+    const padB = parseFloat(cs.paddingBottom) || 0;
+    const avail = PRINT_SHEET_H - padT - padB;
+    if(avail <= 0) return;
+    const need = pg.getBoundingClientRect().height - padT - padB;
+    if(need <= avail + 0.5) return;
+    if(need / avail > 1.15) return;
+    const f = avail / need;
+    const kids = [...pg.children];
+    if(!kids.length) return;
+    const wrap = doc.createElement('div');
+    wrap.style.cssText = 'height:' + avail + 'px; overflow:hidden;';
+    const scaler = doc.createElement('div');
+    scaler.style.cssText = 'transform:scale(' + f.toFixed(4) + '); transform-origin:top left; width:' + (100 / f).toFixed(3) + '%;';
+    pg.appendChild(wrap);
+    wrap.appendChild(scaler);
+    kids.forEach(k=> scaler.appendChild(k));
+  });
+}
+
+// 以隱藏 iframe 列印，只會跳出列印對話框，不另開分頁
 function printIsolated(bodyHtml, title){
-  let printWin;
-  try{ printWin = window.open('', '_blank'); }catch(e){ printWin = null; }
-  if(!printWin || !printWin.document){
-    alert('瀏覽器阻擋了彈出視窗，請允許本網站的彈出視窗權限後再試一次。');
-    return;
-  }
+  const prev = document.getElementById('print-frame');
+  if(prev) prev.remove();
+
+  const frame = document.createElement('iframe');
+  frame.id = 'print-frame';
+  frame.setAttribute('aria-hidden', 'true');
+  frame.style.cssText = 'position:fixed; left:-10000px; top:0; width:820px; height:1200px; border:0; opacity:0;';
+  document.body.appendChild(frame);
+
+  const win = frame.contentWindow;
+  const doc = win.document;
   const styleTag = document.querySelector('style');
   const styles = styleTag ? styleTag.innerHTML : '';
-  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>${styles}
+  doc.open();
+  doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(title)}</title><style>${styles}
     body{background:#fff; margin:0;}
     .report-page{page-break-after:always; break-after:page;}
     .report-page:last-child{page-break-after:auto !important; break-after:auto !important;}
     @page{ margin:0; size:A4; }
   </style></head><body>${bodyHtml}</body></html>`);
-  printWin.document.close();
-  printWin.onload = ()=>{ printWin.focus(); printWin.print(); };
+  doc.close();
+
+  const originalTitle = document.title;
+  let done = false;
+  const cleanup = ()=>{
+    if(done) return;
+    done = true;
+    document.title = originalTitle;
+    window.removeEventListener('afterprint', cleanup);
+    setTimeout(()=>{ const f = document.getElementById('print-frame'); if(f) f.remove(); }, 800);
+  };
+
+  const run = ()=>{
+    try{
+      fitPrintPages(doc);
+      // 另存 PDF 時的預設檔名取自最上層文件標題
+      document.title = title;
+      window.addEventListener('afterprint', cleanup);
+      win.focus();
+      win.print();
+      setTimeout(cleanup, 120000);
+    }catch(e){
+      cleanup();
+      alert('列印失敗：' + e.message);
+    }
+  };
+
+  const pending = [...doc.images].filter(img=> !img.complete)
+    .map(img=> new Promise(r=>{ img.onload = img.onerror = r; }));
+  Promise.all(pending).then(()=> setTimeout(run, 80));
 }
 
 // ============================================================
