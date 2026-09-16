@@ -192,41 +192,47 @@ table.dtable th{background:var(--primary-pale); color:var(--navy);}
 
 /* Report */
 #report-preview{background:#fff; width:794px; margin:0 auto; box-shadow:0 0 14px rgba(0,0,0,.12); position:absolute; left:-99999px; top:0;}
-.report-page{width:794px; min-height:1050px; padding:42px 55px;}
+.report-page{width:794px; min-height:1123px; padding:42px 55px;}
 .report-page + .report-page{page-break-before:always; break-before:page;}
 .report-cover{
   background:#fff;
   color:var(--navy); display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; position:relative;
-  border-bottom:6px solid var(--primary);
+  border-top:7px solid var(--primary); border-bottom:2px solid var(--teal);
 }
+/* 右上角同心圓，兩層不同深淺的金色細線，作為低調的品牌裝飾 */
 .report-cover::before{
-  content:''; position:absolute; right:-90px; top:-90px; width:280px; height:280px; border-radius:50%;
-  border:1.5px solid rgba(188,127,48,.28);
+  content:''; position:absolute; right:-120px; top:-120px; width:360px; height:360px; border-radius:50%;
+  border:1.5px solid rgba(188,127,48,.22);
 }
 .report-cover::after{
-  content:''; position:absolute; right:-40px; top:-40px; width:280px; height:280px; border-radius:50%;
-  border:1px solid rgba(188,127,48,.18);
+  content:''; position:absolute; right:-52px; top:-52px; width:240px; height:240px; border-radius:50%;
+  border:1px solid rgba(62,106,124,.18);
 }
 .cover-logo{
-  width:56px; height:auto; margin-top:38px; margin-bottom:22px; display:block;
+  width:62px; height:auto; margin-top:30px; margin-bottom:26px; display:block;
 }
 .cover-spacer-top{flex:1 1 0;}
-.cover-spacer-bottom{flex:2 1 0;}
-.report-cover .brand{font-size:15px; letter-spacing:3px; color:var(--primary-dark); text-transform:uppercase; font-weight:700;}
-.report-cover .gold-rule{width:52px; height:2px; background:var(--primary); margin:14px 0 18px;}
-.report-cover h1{font-size:36px; margin:0 0 8px; font-weight:700; line-height:1.3; color:var(--navy);}
-.report-cover .subtitle{font-size:15.5px; color:var(--muted); letter-spacing:1px;}
-.patient-box{border:2.5px solid var(--primary); border-radius:12px; padding:22px 26px; margin-top:38px; background:#FFF6D9; position:relative; z-index:1;}
-.patient-box .pb-title{font-size:13.5px; letter-spacing:2px; color:var(--primary-dark); text-transform:uppercase; margin-bottom:12px; font-weight:700;}
-.patient-box table{width:100%; font-size:15.5px; border-collapse:collapse;}
-.patient-box td{padding:7px 0; color:var(--navy); border-bottom:1px solid #EAD9BC;}
+.cover-spacer-bottom{flex:1.5 1 0;}
+.cover-content{position:relative; z-index:1;}
+.report-cover .brand{font-size:13px; letter-spacing:.24em; color:var(--primary-dark); text-transform:uppercase; font-weight:700;}
+.report-cover .gold-rule{width:64px; height:3px; background:var(--primary); margin:16px 0 20px; border-radius:2px;}
+.report-cover h1{font-size:39px; margin:0 0 12px; font-weight:700; line-height:1.28; color:var(--navy); letter-spacing:.03em;}
+.report-cover .subtitle{font-size:11.5px; color:var(--muted); letter-spacing:.2em; text-transform:uppercase;}
+.patient-box{
+  border:1px solid #E8DBC2; border-left:5px solid var(--primary); border-radius:10px;
+  padding:20px 24px; margin-top:42px; background:var(--primary-pale);
+  position:relative; z-index:1;
+}
+.patient-box .pb-title{font-size:11.5px; letter-spacing:.2em; color:var(--primary-dark); text-transform:uppercase; margin-bottom:14px; font-weight:700;}
+.patient-box table{width:100%; font-size:15px; border-collapse:collapse; table-layout:fixed;}
+.patient-box td{padding:8px 0; color:var(--navy); border-bottom:1px solid #EDDFC6;}
 .patient-box tr:last-child td{border-bottom:none;}
-.patient-box td.k{color:var(--primary-dark); width:100px; font-size:14px; font-weight:600;}
-.report-footer-strip{font-size:13px; color:var(--muted); border-top:1px solid var(--border); padding-top:14px; position:relative; z-index:1; display:flex; justify-content:space-between;}
+.patient-box td.k{color:var(--primary-dark); width:86px; font-size:12.5px; font-weight:700; letter-spacing:.06em;}
+.report-footer-strip{font-size:12px; color:var(--muted); border-top:1px solid var(--border); padding-top:14px; position:relative; z-index:1; display:flex; justify-content:space-between;}
 .rp-header{display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:8px; margin-bottom:16px;}
 .rp-header .clinic{font-size:14px; color:var(--primary-dark); font-weight:700;}
-.rp-header .pagenum{font-size:13px; color:#999;}
-.rp-layout{width:100%; border-collapse:collapse; height:1005px;}
+.rp-header .pagenum{font-size:12px; color:var(--muted); letter-spacing:.04em;}
+.rp-layout{width:100%; border-collapse:collapse; height:1039px;}
 .rp-layout>thead{display:table-header-group;}
 .rp-layout>tfoot{display:table-footer-group;}
 .rp-layout td{vertical-align:top; padding:0;}
@@ -237,9 +243,10 @@ table.dtable th{background:var(--primary-pale); color:var(--navy);}
 .rp-table{width:100%; border-collapse:collapse; font-size:14px; margin-bottom:12px; break-inside:auto; page-break-inside:auto;}
 .rp-table tr{break-inside:avoid; page-break-inside:avoid;}
 .rp-table thead{display:table-header-group;}
-.rp-table th,.rp-table td{border:1px solid #E3DED4; padding:5px 8px; text-align:left; overflow-wrap:anywhere; word-break:break-word;}
+.rp-table th,.rp-table td{border:1px solid #E3DED4; padding:6px 9px; text-align:left; overflow-wrap:anywhere; word-break:break-word;}
+.rp-table tr:nth-child(even) td{background:#FCFBF8;}
 .rp-table th{background:#F7F3EC; color:var(--navy);}
-.rp-note{font-size:14px; color:#3a3833; white-space:pre-wrap; line-height:1.55; overflow-wrap:anywhere; word-break:break-word;}
+.rp-note{font-size:14px; color:#3a3833; white-space:pre-wrap; line-height:1.56; overflow-wrap:anywhere; word-break:break-word;}
 /* 圖表與附件圖片不從中間切斷 */
 .rp-chart{break-inside:avoid; page-break-inside:avoid; margin-top:10px;}
 .rp-img-page img{break-inside:avoid; page-break-inside:avoid;}
@@ -256,7 +263,7 @@ table.dtable th{background:var(--primary-pale); color:var(--navy);}
   .screen{display:none !important;}
   #report-preview{display:block !important; position:static !important; left:auto !important; top:auto !important; box-shadow:none; width:794px; margin:0;}
   .report-page{width:794px;}
-  .report-cover{min-height:1050px;}
+  .report-cover{min-height:1123px;}
   .report-page + .report-page{page-break-before:always; break-before:page;}
   @page{ margin:0; size:A4; }
 }
@@ -908,7 +915,7 @@ const TOP_AREAS = [
 ];
 
 // 最後改版日期：每次改版請一併更新，會顯示於首頁左下角
-const APP_REVISION = '2026-09-15';
+const APP_REVISION = '2026-09-16';
 function renderAppRevision(){
   const el = document.getElementById('app-revision');
   if(el) el.textContent = '最後改版：' + APP_REVISION;
@@ -1066,7 +1073,13 @@ document.getElementById('p-date').addEventListener('change', updateAge);
 function updateAge(){
   const b = document.getElementById('p-birth').value;
   const d = document.getElementById('p-date').value || new Date().toISOString().slice(0,10);
-  if(!b) return;
+  // 出生日期被清空或填寫不完整時，一併清掉年齡，
+  // 否則報告會出現「出生日期 --」卻仍印著舊年齡的矛盾
+  if(!b){
+    document.getElementById('p-age').value = '';
+    if(typeof calcStopBang === 'function') calcStopBang();
+    return;
+  }
   const bd = new Date(b), rd = new Date(d);
   let age = rd.getFullYear() - bd.getFullYear();
   const m = rd.getMonth() - bd.getMonth();
@@ -2302,8 +2315,10 @@ initEdu();
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
 function chk(id){ return document.getElementById(id) && document.getElementById(id).checked; }
+// __RP_TOTAL__ 於報告組裝完成後統一替換為總頁數
 function rpHeader(id){
-  return `<div class="rp-header"><span class="clinic">木子澄安診所 Muzi Cheng'an Clinic</span></div>`;
+  return `<div class="rp-header"><span class="clinic">木子澄安診所 Muzi Cheng'an Clinic</span>` +
+    `<span class="pagenum">第 ${id} 頁／共 __RP_TOTAL__ 頁</span></div>`;
 }
 
 // 將每個報告頁（封面除外）包進 table 結構：thead/tfoot 在瀏覽器列印時會自動於每一張紙重複，
@@ -2396,6 +2411,7 @@ function buildReport(){
   const height = P('b-height') || '--';
   const weight = P('b-weight') || '--';
   const date = P('p-date') || '--';
+  const birth = P('p-birth') || '--';
   const bmiVal = document.getElementById('bmi-value').textContent;
 
   let pages = [];
@@ -2412,7 +2428,8 @@ function buildReport(){
       <div class="patient-box">
         <div class="pb-title">個人資訊 PERSONAL INFORMATION</div>
         <table>
-          <tr><td class="k">姓　　名</td><td>${esc(name)}</td><td class="k">評估日期</td><td>${esc(date)}</td></tr>
+          <tr><td class="k">姓　　名</td><td>${esc(name)}</td><td class="k">出生日期</td><td>${esc(birth)}</td></tr>
+          <tr><td class="k">性　　別</td><td>${gender}　${esc(age)} 歲</td><td class="k">評估日期</td><td>${esc(date)}</td></tr>
         </table>
       </div>
     </div>
@@ -2428,7 +2445,7 @@ function buildReport(){
       <tr><th style="width:25%">姓名</th><td style="width:25%">${esc(name)}</td><th style="width:25%">性別</th><td style="width:25%">${gender}</td></tr>
       <tr><th>年齡</th><td>${esc(age)} 歲</td><th>評估日期</th><td>${esc(date)}</td></tr>
       <tr><th>身高</th><td>${esc(height)} cm</td><th>體重</th><td>${esc(weight)} kg</td></tr>
-      <tr><th>BMI</th><td>${esc(bmiVal)}</td><td></td><td></td></tr>
+      <tr><th>BMI</th><td>${esc(bmiVal)}</td><th>出生日期</th><td>${esc(birth)}</td></tr>
     </table>
     <div class="rp-section-title" style="margin-top:18px">病史評估</div>
     ${hxHistoryBlocksHtml()}
@@ -2555,7 +2572,8 @@ function buildReport(){
     });
   });
 
-  document.getElementById('report-preview').innerHTML = pages.join('\n');
+  document.getElementById('report-preview').innerHTML =
+    pages.join('\n').split('__RP_TOTAL__').join(pages.length);
   wrapReportPages(document.getElementById('report-preview'));
   document.getElementById('status-pill').textContent = '報告已產生';
 }
