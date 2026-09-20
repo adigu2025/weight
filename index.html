@@ -140,6 +140,12 @@ body.edu-max .edu-shell{height:calc(100vh - 20px);}
   transition:transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
 }
 .cat-card:hover{transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--primary);}
+/* 鍵盤選取狀態：預設不選取，按方向鍵後才出現 */
+.cat-card.key-sel{
+  border-color:var(--primary); box-shadow:0 0 0 3px rgba(188,127,48,.22), var(--shadow-lg);
+  transform:translateY(-4px);
+}
+.cat-card.key-sel .cat-icon{transform:scale(1.08);}
 .cat-icon{
   width:54px; height:54px; border-radius:14px; background:var(--primary-pale); border:1.5px solid #EAD9BC;
   display:flex; align-items:center; justify-content:center; font-size:28px;
@@ -991,16 +997,36 @@ function renderAppRevision(){
   if(el) el.textContent = '最後改版：' + APP_REVISION;
 }
 renderAppRevision();
+function openTopArea(a){
+  if(a.id === 'workflow-hub') showWorkflowHub();
+  else showLeaf(a.id, 'top');
+}
 function renderTopAreaGrid(){
   const box = document.getElementById('top-area-grid');
   box.innerHTML = '';
-  TOP_AREAS.forEach(a=>{
+  TOP_AREAS.forEach((a,i)=>{
     const el = document.createElement('div');
-    el.className = 'cat-card';
-    el.onclick = ()=> a.id === 'workflow-hub' ? showWorkflowHub() : showLeaf(a.id, 'top');
+    el.className = 'cat-card' + (i === homeSelIdx ? ' key-sel' : '');
+    el.onclick = ()=> openTopArea(a);
     el.innerHTML = `<div class="cat-icon">${a.icon}</div><div class="cat-label">${a.label}</div><div class="cat-desc">${a.desc}</div>`;
     box.appendChild(el);
   });
+}
+
+// 首頁三大功能區的鍵盤操作。homeSelIdx 為 -1 代表尚未選取，
+// 首次按方向鍵才會選到第一張，避免一進首頁就有東西被框起來。
+let homeSelIdx = -1;
+function homeMove(delta){
+  const n = TOP_AREAS.length;
+  homeSelIdx = (homeSelIdx < 0)
+    ? (delta > 0 ? 0 : n - 1)
+    : (homeSelIdx + delta + n) % n;
+  renderTopAreaGrid();
+}
+function homeReset(){
+  if(homeSelIdx === -1) return;
+  homeSelIdx = -1;
+  renderTopAreaGrid();
 }
 renderTopAreaGrid();
 
@@ -1089,6 +1115,7 @@ function showScreen(id){
   window.scrollTo(0,0);
 }
 function goHome(){
+  homeReset();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-home').classList.add('active');
   document.getElementById('banner-sub').textContent = '減重治療全面評估系統';
@@ -2928,9 +2955,20 @@ document.addEventListener('keydown', (e)=>{
   const t = e.target;
   const tag = t && t.tagName ? t.tagName.toLowerCase() : '';
   if(tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) return;
+  // 首頁：方向鍵移動、Enter 進入、ESC 取消選取
+  if(currentScreen === 'home'){
+    if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){ e.preventDefault(); homeMove(1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ e.preventDefault(); homeMove(-1); }
+    else if(e.key === 'Enter' || e.key === ' '){
+      if(homeSelIdx >= 0){ e.preventDefault(); openTopArea(TOP_AREAS[homeSelIdx]); }
+    }
+    else if(e.key === 'Escape'){ e.preventDefault(); homeReset(); }
+    return;
+  }
   if(currentScreen === 'education'){
-    if(e.key === 'ArrowLeft'){ e.preventDefault(); selectEduPage((eduActiveIdx - 1 + EDU_PDF_PAGES.length) % EDU_PDF_PAGES.length); }
-    else if(e.key === 'ArrowRight'){ e.preventDefault(); selectEduPage((eduActiveIdx + 1) % EDU_PDF_PAGES.length); }
+    // 右與下都切下一張，左與上都切上一張
+    if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ e.preventDefault(); selectEduPage((eduActiveIdx - 1 + EDU_PDF_PAGES.length) % EDU_PDF_PAGES.length); }
+    else if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){ e.preventDefault(); selectEduPage((eduActiveIdx + 1) % EDU_PDF_PAGES.length); }
     else if(e.key === '+' || e.key === '='){ e.preventDefault(); eduZoomStep(1); }
     else if(e.key === '-' || e.key === '_'){ e.preventDefault(); eduZoomStep(-1); }
     else if(e.key === '0'){ e.preventDefault(); eduFit(); }
