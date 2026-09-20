@@ -3406,17 +3406,32 @@ function printIsolated(bodyHtml, title){
 
   const originalTitle = document.title;
   let done = false;
+  let printMql = null;
   const cleanup = ()=>{
     if(done) return;
     done = true;
     hidePrintBusy();
     // 只還原自己設定過的標題，避免與另一次列印互相覆蓋
     if(document.title === title) document.title = originalTitle;
+    // afterprint 是由實際執行列印的視窗發出，也就是 iframe 那一個，
+    // 父視窗不一定收得到，因此兩邊都要監聽與移除
+    try{ win.removeEventListener('afterprint', cleanup); }catch(e){}
     window.removeEventListener('afterprint', cleanup);
+    if(printMql){
+      try{ printMql.removeEventListener('change', onMqlChange); }catch(e){}
+      printMql = null;
+    }
+    // 焦點先前被移進 iframe，不還原的話主畫面收不到鍵盤事件，
+    // 方向鍵與快捷鍵會像是失效
+    try{ window.focus(); }catch(e){}
+    if(document.activeElement && document.activeElement.tagName === 'IFRAME'){
+      try{ document.activeElement.blur(); }catch(e){}
+    }
     // 刪除自己建立的那個 iframe，不用 id 查找，
     // 否則短時間內連按兩次列印時會誤刪後一次的 iframe
     setTimeout(()=>{ if(frame.parentNode) frame.parentNode.removeChild(frame); }, 800);
   };
+  const onMqlChange = (e)=>{ if(!e.matches) cleanup(); };
 
   const run = ()=>{
     hidePrintBusy();
@@ -3424,10 +3439,17 @@ function printIsolated(bodyHtml, title){
       fitPrintPages(doc);
       // 另存 PDF 時的預設檔名取自最上層文件標題
       document.title = title;
+      // 兩個視窗都掛，並以 matchMedia 作為額外保險
+      try{ win.addEventListener('afterprint', cleanup); }catch(e){}
       window.addEventListener('afterprint', cleanup);
+      try{
+        printMql = win.matchMedia && win.matchMedia('print');
+        if(printMql && printMql.addEventListener) printMql.addEventListener('change', onMqlChange);
+        else printMql = null;
+      }catch(e){ printMql = null; }
       win.focus();
       win.print();
-      setTimeout(cleanup, 120000);
+      setTimeout(cleanup, 60000);
     }catch(e){
       cleanup();
       alert('列印失敗：' + e.message);
