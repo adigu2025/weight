@@ -107,6 +107,19 @@ body.edu-max .edu-shell{height:calc(100vh - 20px);}
 }
 .edu-tab:hover{background:var(--primary-pale); color:var(--primary-dark);}
 .edu-tab.current{background:var(--primary); color:#fff; font-weight:700;}
+/* 列印準備中的提示。圖片改為外部檔案後，第一次列印需先下載，
+   沒有提示會讓人以為按了沒反應 */
+.print-busy{
+  position:fixed; left:50%; bottom:28px; transform:translateX(-50%);
+  background:var(--navy); color:#fff; padding:11px 20px; border-radius:24px;
+  font-size:14.5px; box-shadow:var(--shadow-lg); z-index:10000;
+  display:flex; align-items:center; gap:10px; pointer-events:none;
+}
+.print-busy .dot{
+  width:9px; height:9px; border-radius:50%; background:var(--primary);
+  animation:pbpulse .9s ease-in-out infinite;
+}
+@keyframes pbpulse{0%,100%{opacity:.35}50%{opacity:1}}
 @media (max-width:860px){
   body.edu-mode{overflow:auto;}
   .edu-shell{flex-direction:column; height:auto;}
@@ -981,7 +994,7 @@ const TOP_AREAS = [
 ];
 
 // 最後改版日期：每次改版請一併更新，會顯示於首頁左下角
-const APP_REVISION = '2026-09-20';
+const APP_REVISION = '2026-09-21';
 function renderAppRevision(){
   const el = document.getElementById('app-revision');
   if(el) el.textContent = '最後改版：' + APP_REVISION;
@@ -990,11 +1003,25 @@ renderAppRevision();
 // 列印單張的四個項目。四格等寬並列，整格可點，
 // 與首頁三大功能區共用同一套鍵盤選取邏輯。
 const PRINT_TILES = [
-  {label:'減重門診評估問卷',       note:'共 2 頁', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6M9 15h4"/></svg>', run:()=>printBlankScales()},
-  {label:'地中海飲食衛教',         note:'共 2 頁', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M3 20h18"/><path d="M9.5 12a4 4 0 0 1 5-5.5"/></svg>', run:()=>printEducation()},
-  {label:'健康紀錄表',             note:'共 1 頁', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h3"/></svg>', run:()=>printHealthRecord()},
-  {label:'腸泌素針劑自費使用同意書', note:'共 1 頁', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"/><path d="M14 3v5h5"/><path d="M18.5 13.5a1.8 1.8 0 0 1 2.5 2.5L17 20l-3 .7.7-3z"/></svg>', run:()=>printConsent()},
+  {label:'減重門診評估問卷',       note:'共 2 頁', assets:()=>[],                 icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6M9 15h4"/></svg>', run:()=>printBlankScales()},
+  {label:'地中海飲食衛教',         note:'共 2 頁', assets:()=>EDU_MED_DIET_PAGES, icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M3 20h18"/><path d="M9.5 12a4 4 0 0 1 5-5.5"/></svg>', run:()=>printEducation()},
+  {label:'健康紀錄表',             note:'共 1 頁', assets:()=>[HEALTH_RECORD_PAGE], icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h3"/></svg>', run:()=>printHealthRecord()},
+  {label:'腸泌素針劑自費使用同意書', note:'共 1 頁', assets:()=>[CONSENT_PDF_PAGE],  icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.14em;display:inline-block" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"/><path d="M14 3v5h5"/><path d="M18.5 13.5a1.8 1.8 0 0 1 2.5 2.5L17 20l-3 .7.7-3z"/></svg>', run:()=>printConsent()},
 ];
+// 進入列印單張時先把四張表單的圖片抓下來，
+// 這樣真的要列印時圖片已在快取中，按下去就會立刻跳出對話框
+const printPreloaded = new Set();
+function preloadPrintAssets(){
+  PRINT_TILES.forEach(t=>{
+    (t.assets ? t.assets() : []).forEach(src=>{
+      if(!src || printPreloaded.has(src)) return;
+      printPreloaded.add(src);
+      const im = new Image();
+      im.src = src;
+    });
+  });
+}
+
 function renderPrintGrid(){
   const box = document.getElementById('print-grid');
   if(!box) return;
@@ -1092,6 +1119,7 @@ function renderBottomNav(){
   gridSelScreen = null;
   renderPrintGrid();
   renderTopAreaGrid();
+  if(currentScreen === 'print-single') preloadPrintAssets();
   // 衛教頁採整頁閱讀模式：關閉頁面捲動並放寬主容器邊距
   document.body.classList.toggle('edu-mode', currentScreen === 'education');
   if(currentScreen === 'education') setTimeout(applyEduZoom, 0);
@@ -3336,6 +3364,19 @@ function fitPrintPages(doc){
   });
 }
 
+function showPrintBusy(text){
+  hidePrintBusy();
+  const el = document.createElement('div');
+  el.className = 'print-busy no-print';
+  el.id = 'print-busy';
+  el.innerHTML = '<span class="dot"></span><span>' + esc(text || '正在準備列印…') + '</span>';
+  document.body.appendChild(el);
+}
+function hidePrintBusy(){
+  const el = document.getElementById('print-busy');
+  if(el) el.remove();
+}
+
 // 以隱藏 iframe 列印，只會跳出列印對話框，不另開分頁
 function printIsolated(bodyHtml, title){
   const prev = document.getElementById('print-frame');
@@ -3368,6 +3409,7 @@ function printIsolated(bodyHtml, title){
   const cleanup = ()=>{
     if(done) return;
     done = true;
+    hidePrintBusy();
     // 只還原自己設定過的標題，避免與另一次列印互相覆蓋
     if(document.title === title) document.title = originalTitle;
     window.removeEventListener('afterprint', cleanup);
@@ -3377,6 +3419,7 @@ function printIsolated(bodyHtml, title){
   };
 
   const run = ()=>{
+    hidePrintBusy();
     try{
       fitPrintPages(doc);
       // 另存 PDF 時的預設檔名取自最上層文件標題
@@ -3391,9 +3434,13 @@ function printIsolated(bodyHtml, title){
     }
   };
 
+  // 圖片為外部檔案，第一次列印需先下載完才能正確排版。
+  // 期間顯示提示，並設 20 秒上限，避免網路異常時一直沒有反應。
   const pending = [...doc.images].filter(img=> !img.complete)
     .map(img=> new Promise(r=>{ img.onload = img.onerror = r; }));
-  Promise.all(pending).then(()=> setTimeout(run, 80));
+  if(pending.length) showPrintBusy('正在準備列印…（' + pending.length + ' 張圖片下載中）');
+  const timeout = new Promise(r=> setTimeout(r, 20000));
+  Promise.race([Promise.all(pending), timeout]).then(()=> setTimeout(run, 80));
 }
 
 // ============================================================
