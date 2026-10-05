@@ -994,7 +994,7 @@ const TOP_AREAS = [
 ];
 
 // 最後改版日期：每次改版請一併更新，會顯示於首頁左下角
-const APP_REVISION = '2026-09-21';
+const APP_REVISION = '2026-10-05';
 function renderAppRevision(){
   const el = document.getElementById('app-revision');
   if(el) el.textContent = '最後改版：' + APP_REVISION;
@@ -1030,6 +1030,7 @@ function renderPrintGrid(){
     const el = document.createElement('div');
     el.className = 'cat-card' + (gridSelScreen === 'print-single' && i === gridSelIdx ? ' key-sel' : '');
     el.onclick = ()=> t.run();
+    el.oncontextmenu = e=> showTileMenu(e, t);
     el.innerHTML = `<div class="cat-icon">${t.icon}</div>` +
       `<div class="cat-label">${esc(t.label)}</div>` +
       `<div class="cat-desc">${esc(t.note)}</div>`;
@@ -3060,33 +3061,95 @@ function printImagePages(srcs, title){
   printIsolated(pages, title);
 }
 
-// 衛教頁面按滑鼠右鍵可列印當前這一頁
-function closeEduMenu(){
-  const old = document.getElementById('edu-ctxmenu');
+/* ─── 複製圖片／另存圖片 ──────────────────────────────────────────
+   另存：直接下載原始圖檔。複製：fetch 取得原始圖檔 bytes 後寫入剪貼簿。
+   兩者都不經過 canvas——本機以 file:// 開啟時，canvas 讀取跨「檔案」
+   的圖片像素會被瀏覽器視為 tainted 而擋下（上面 printSplitImage 也是
+   為此才改用 CSS 位移裁切），fetch 同一份檔案則不受此限制。 */
+function fileExt(src){ return (src.split('.').pop() || 'jpg').toLowerCase(); }
+function showMiniToast(msg){
+  const t = document.createElement('div');
+  t.textContent = msg; t.className = 'no-print';
+  t.style.cssText = 'position:fixed; left:50%; bottom:32px; transform:translateX(-50%); background:var(--text); color:var(--surface); padding:10px 18px; border-radius:8px; font-size:14px; z-index:9999; box-shadow:var(--shadow-lg); opacity:0; transition:opacity .2s;';
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>{ t.style.opacity = '1'; });
+  setTimeout(()=>{ t.style.opacity = '0'; setTimeout(()=>t.remove(), 200); }, 1800);
+}
+function saveImageAs(src, baseName){
+  const a = document.createElement('a');
+  a.href = src; a.download = baseName + '.' + fileExt(src);
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function copyImageToClipboard(src){
+  if(!navigator.clipboard || !window.ClipboardItem){ alert('此瀏覽器不支援複製圖片'); return; }
+  try{
+    const res = await fetch(src);
+    const blob = await res.blob();
+    await navigator.clipboard.write([new ClipboardItem({ [blob.type || 'image/jpeg']: blob })]);
+    showMiniToast('已複製圖片到剪貼簿');
+  }catch(err){ alert('複製失敗：' + err.message); }
+}
+
+// 共用右鍵選單：衛教頁面與列印單張的圖片卡片都用這個顯示列印／複製／另存
+function closeCtxMenu(){
+  const old = document.getElementById('wt-ctxmenu');
   if(old) old.remove();
 }
-function showEduMenu(e){
+function showCtxMenu(e, actions){
   e.preventDefault();
-  closeEduMenu();
+  closeCtxMenu();
   const menu = document.createElement('div');
-  menu.id = 'edu-ctxmenu';
+  menu.id = 'wt-ctxmenu';
   menu.className = 'no-print';
-  menu.style.cssText = 'position:fixed; z-index:9999; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-lg); padding:6px; min-width:180px;';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.style.cssText = 'display:block; width:100%; padding:9px 14px; border:none; background:none; text-align:left; cursor:pointer; font-family:inherit; font-size:15px; color:var(--text); border-radius:7px; white-space:nowrap;';
-  btn.textContent = '列印這一頁衛教';
-  btn.onmouseenter = ()=>{ btn.style.background = 'var(--primary-pale)'; };
-  btn.onmouseleave = ()=>{ btn.style.background = 'none'; };
-  btn.onclick = ()=>{ closeEduMenu(); printEduPage(); };
-  menu.appendChild(btn);
+  menu.style.cssText = 'position:fixed; z-index:9999; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow-lg); padding:6px; min-width:200px;';
+  actions.forEach(a=>{
+    if(a.sep){
+      const s = document.createElement('div');
+      s.style.cssText = 'height:1px; background:var(--border); margin:5px 8px;';
+      menu.appendChild(s); return;
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'display:block; width:100%; padding:9px 14px; border:none; background:none; text-align:left; cursor:pointer; font-family:inherit; font-size:15px; color:var(--text); border-radius:7px; white-space:nowrap;';
+    btn.textContent = a.label;
+    btn.onmouseenter = ()=>{ btn.style.background = 'var(--primary-pale)'; };
+    btn.onmouseleave = ()=>{ btn.style.background = 'none'; };
+    btn.onclick = ()=>{ closeCtxMenu(); a.fn(); };
+    menu.appendChild(btn);
+  });
   document.body.appendChild(menu);
   const r = menu.getBoundingClientRect();
-  menu.style.left = Math.min(e.clientX, window.innerWidth  - r.width  - 8) + 'px';
-  menu.style.top  = Math.min(e.clientY, window.innerHeight - r.height - 8) + 'px';
+  menu.style.left = Math.max(8, Math.min(e.clientX, window.innerWidth  - r.width  - 8)) + 'px';
+  menu.style.top  = Math.max(8, Math.min(e.clientY, window.innerHeight - r.height - 8)) + 'px';
 }
-document.addEventListener('click', closeEduMenu);
-document.addEventListener('scroll', closeEduMenu, true);
+document.addEventListener('click', closeCtxMenu);
+document.addEventListener('scroll', closeCtxMenu, true);
+
+// 衛教頁面按滑鼠右鍵：列印／複製／另存目前這一頁
+function showEduMenu(e){
+  const item = EDU_PDF_PAGES[eduActiveIdx];
+  if(!item) return;
+  showCtxMenu(e, [
+    {label:'列印這一頁衛教', fn:printEduPage},
+    {sep:true},
+    {label:'複製這一頁衛教圖片', fn:()=>copyImageToClipboard(item.src)},
+    {label:'另存這一頁衛教為圖片', fn:()=>saveImageAs(item.src, item.label)}
+  ]);
+}
+
+// 列印單張的卡片按滑鼠右鍵：列印／複製／另存（無圖片資產的問卷卡片不接此事件）
+function showTileMenu(e, t){
+  const assets = t.assets ? t.assets() : [];
+  if(!assets.length) return;
+  const n = assets.length;
+  const actions = [{label: n>1 ? `列印這一份（${n} 頁）` : '列印', fn:t.run}, {sep:true}];
+  if(n>1) assets.forEach((src,i)=>actions.push({label:'複製第 '+(i+1)+' 頁的圖片', fn:()=>copyImageToClipboard(src)}));
+  else actions.push({label:'複製圖片', fn:()=>copyImageToClipboard(assets[0])});
+  actions.push({sep:true});
+  if(n>1) assets.forEach((src,i)=>actions.push({label:'另存第 '+(i+1)+' 頁為圖片', fn:()=>saveImageAs(src, t.label+'_第'+(i+1)+'頁')}));
+  else actions.push({label:'另存圖片', fn:()=>saveImageAs(assets[0], t.label)});
+  showCtxMenu(e, actions);
+}
 
 // 兩頁並列的衛教圖在螢幕上維持並列，列印時拆回單頁、各佔一張 A4。
 // 以 CSS 位移裁切而非 canvas，避免本機以 file:// 開啟時讀取圖片像素受限。
